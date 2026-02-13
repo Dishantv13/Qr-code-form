@@ -1,5 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
+import { Link } from "react-router-dom";
+import API from "../api/api";
+import notify from "../utils/notification";
 
 const CreateEvent = () => {
   const [formData, setFormData] = useState({
@@ -12,8 +14,6 @@ const CreateEvent = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,22 +27,33 @@ const CreateEvent = () => {
     e.preventDefault();
 
     if (!formData.eventId || !formData.eventName || !formData.date) {
-      setMessage("Event ID, Event Name, and Date are required");
-      setSuccess(false);
+      notify.warning("Event ID, Event Name, and Date are required");
       return;
     }
 
     try {
       setLoading(true);
-      setMessage("");
 
-      const res = await axios.post("http://localhost:5000/api/event/create-event", {
-        ...formData,
-        capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
-      });
+      const token = localStorage.getItem("token");
 
-      setMessage(res.data.message);
-      setSuccess(true);
+      if (!token) {
+        notify.error("Please login as admin to create events");
+        return;
+      }
+
+      const res = await API.post("/event/create-event",
+        {
+          ...formData,
+          capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      notify.success(res.data.message);
       setFormData({
         eventId: "",
         eventName: "",
@@ -52,8 +63,7 @@ const CreateEvent = () => {
         capacity: "",
       });
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to create event");
-      setSuccess(false);
+      notify.error(error.response?.data?.message || "Failed to create event");
     } finally {
       setLoading(false);
     }
@@ -62,15 +72,23 @@ const CreateEvent = () => {
   return (
     <div className="min-h-screen bg-linear-to-br from-purple-200 via-white to-pink-200 p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Create New Event
-          </h1>
-          <p className="text-gray-600">Set up a new event for registration</p>
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              Create New Event
+            </h1>
+            <p className="text-gray-600">Set up a new event for registration</p>
+          </div>
+          <Link
+            to="/admin"
+            className="px-4 py-2 bg-white/80 text-gray-700 rounded-lg hover:bg-white shadow-md transition-all duration-300"
+          >
+            ← Back to Admin
+          </Link>
         </div>
 
         <div className="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -174,20 +192,6 @@ const CreateEvent = () => {
             <div>
                 <label className="block text-sm font-semibold text-red-500 mb-2">All fields indicated with (*) are required</label>
             </div>
-
-            {message && ( 
-              <div
-                className={`p-4 rounded-lg text-sm ${
-                  success
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                }`}
-              >
-                {message}
-
-              </div>
-              
-            )}
 
             <button
               type="submit"

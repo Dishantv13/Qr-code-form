@@ -59,7 +59,7 @@ const getEventRegistrations  = async (req, res) => {
       return res.status(404).json({ message : "Event Not Found"})
     }
 
-    const registrations = (await Register.find({eventId})).sort({createdAt : -1});
+    const registrations = await Register.find({eventId}).sort({createdAt : -1});
 
     res.status(200).json({
       event :{
@@ -104,4 +104,21 @@ const generateQrCode = async (req,res) => {
   }
 }
 
-export { createEvent, getEvent, getEventRegistrations, generateQrCode };
+const getAllEvents = async (req, res) => {
+  try {
+    const events = await Event.find().sort({ date: 1 });
+
+    if(!events || events.length === 0) {
+      return res.status(404).json({ message: "No events found" });
+    }
+    
+    res.status(200).json({ 
+      message: "Events fetched successfully",
+      events 
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}
+
+export { createEvent, getEvent, getEventRegistrations, generateQrCode, getAllEvents };

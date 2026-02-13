@@ -19,9 +19,11 @@ connectToDB()
 })
 .catch((error) => console.log("MONGODB connection failed!!!: ", error))
 
-import userRoutes from './routes/user.route.js'
-import qrRoutes from './routes/qr.routes.js'
+import userRoutes from './routes/register.route.js'
+import qrRoutes from './routes/event.routes.js'
+import adminRoutes from './routes/admin.route.js'
 
 app.use(express.json())
-app.use('/api', userRoutes)
+app.use('/api/register', userRoutes)
 app.use('/api/event', qrRoutes)
+app.use('/api/admin', adminRoutes)

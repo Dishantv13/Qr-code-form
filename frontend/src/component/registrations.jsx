@@ -1,37 +1,51 @@
 import { useState } from "react";
-import axios from "axios";
+import { Link } from "react-router-dom";
+import API from "../api/api";
+import notify from "../utils/notification";
 
 const Registrations = () => {
   const [eventId, setEventId] = useState("");
   const [eventData, setEventData] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
 
     if (!eventId.trim()) {
-      setError("Please enter an Event ID");
+      notify.warning("Please enter an Event ID");
       return;
     }
 
     try {
       setLoading(true);
-      setError("");
       setEventData(null);
       setRegistrations([]);
 
-      const res = await axios.get(
-        `http://localhost:5000/api/event/registrations/${eventId}`
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        notify.error("Please login as admin to view registrations");
+        setSearched(true);
+        return;
+      }
+
+      const res = await API.get(
+        `/event/registrations/${eventId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       setEventData(res.data.event);
       setRegistrations(res.data.registrations);
       setSearched(true);
+      notify.success("Registrations loaded successfully!");
     } catch (err) {
-      setError(
+      notify.error(
         err.response?.data?.message || "Failed to fetch registrations. Event not found."
       );
       setEventData(null);
@@ -63,18 +77,27 @@ const Registrations = () => {
     const link = document.createElement("a");
     link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
     link.download = `registrations-${eventId}.csv`;
-    link.click();   
+    link.click();
+    notify.success("CSV file downloaded successfully!");
   };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto">
         
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Event Registrations
-          </h1>
-          <p className="text-gray-600">View all registered users for an event</p>
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              Event Registrations
+            </h1>
+            <p className="text-gray-600">View all registered users for an event</p>
+          </div>
+          <Link
+            to="/admin"
+            className="px-4 py-2 bg-white/80 text-gray-700 rounded-lg hover:bg-white shadow-md transition-all duration-300"
+          >
+            ← Back to Admin
+          </Link>
         </div>
 
     
@@ -108,11 +131,6 @@ const Registrations = () => {
             </div>
           </form>
 
-          {error && (
-            <div className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 p-4 rounded-lg">
-              {error}
-            </div>
-          )}
         </div>
 
         {searched && (
