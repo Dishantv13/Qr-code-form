@@ -26,8 +26,8 @@ const CreateEvent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.eventId || !formData.eventName || !formData.date) {
-      notify.warning("Event ID, Event Name, and Date are required");
+    if (!formData.eventId || !formData.eventName || !formData.date || !formData.location) {
+      notify.warning("Event ID, Event Name, Date, and Location are required");
       return;
     }
 
